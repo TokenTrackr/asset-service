@@ -11,12 +11,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AssetDTO {
     private Long id;
-    private String symbol;
+    private String cryptoId;
     private String userId;
-    private Long portfolioId;
-    private Double quantity;
-    private Double currentPrice;
-    public Double getCurrentValue() {
+    private double quantity;
+    private double currentPrice;
+
+    public double getCurrentValue() {
+
         return quantity * currentPrice;
     }
 }
