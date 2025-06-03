@@ -17,17 +17,14 @@ public class Asset {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String symbol;
+    @Column(name = "crypto_id", nullable = false)
+    private String cryptoId;
 
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "portfolio_id", nullable = false)
-    private Long portfolioId;
-
     @Column(nullable = false)
-    private Double quantity;
+    private double quantity;
 
     // Current price is transient - not stored in DB
     @Transient
