@@ -11,4 +11,6 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     Optional<Asset> findByIdAndUserId(Long assetId, String userId);
 
     void deleteByUserId(String userId);
+
+    Optional<Asset> findByUserIdAndCryptoId(String userId, String cryptoId);
 }

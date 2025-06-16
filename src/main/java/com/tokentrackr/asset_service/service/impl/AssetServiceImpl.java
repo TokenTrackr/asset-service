@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,19 +30,6 @@ public class AssetServiceImpl implements AssetService {
     private final AssetRepository assetRepository;
     private final PriceCacheService priceCacheService;
 
-    @Override
-    public AssetDTO createAsset(CreateAssetRequest request, String userId) {
-        Asset asset = new Asset();
-        asset.setCryptoId(request.getCryptoId().toUpperCase());
-        asset.setUserId(userId);
-        asset.setQuantity(request.getQuantity());
-
-        Asset savedAsset = assetRepository.save(asset);
-        log.info("Created asset with id: {} for user: {}", savedAsset.getId(), userId);
-        return convertToDTO(savedAsset);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public List<AssetDTO> getUserAssets(String userId) {
         List<Asset> assets = assetRepository.findByUserId(userId);
@@ -52,31 +40,12 @@ public class AssetServiceImpl implements AssetService {
                 .collect(Collectors.toSet());
 
         // Fetch all prices at once from Redis
-        Map<String, Double> prices = priceCacheService.getPrices(symbols);
+        Map<String, BigDecimal> prices = priceCacheService.getPrices(symbols);
 
         // Convert to DTOs with prices
         return assets.stream()
                 .map(asset -> convertToDTO(asset, prices.get(asset.getCryptoId())))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public void deleteAsset(Long id, String userId) {
-        Asset asset = assetRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new AssetNotFoundException("Asset not found with id: " + id));
-        assetRepository.delete(asset);
-        log.info("Deleted asset with id: {} for user: {}", id, userId);
-    }
-
-    @Override
-    public AssetDTO increaseQuantity(Long id, Double quantity, String userId) {
-        Asset asset = assetRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new AssetNotFoundException("Asset not found with id: " + id));
-
-        asset.setQuantity(asset.getQuantity() + quantity);
-        Asset updatedAsset = assetRepository.save(asset);
-        log.info("Increased quantity by {} for asset id: {}", quantity, id);
-        return convertToDTO(updatedAsset);
     }
 
     @Override
@@ -95,18 +64,18 @@ public class AssetServiceImpl implements AssetService {
     }
 
     private AssetDTO convertToDTO(Asset asset) {
-        Double currentPrice = priceCacheService.getPrice(asset.getCryptoId());
+        BigDecimal currentPrice = priceCacheService.getPrice(asset.getCryptoId());
         return convertToDTO(asset, currentPrice);
     }
 
-    private AssetDTO convertToDTO(Asset asset, Double currentPrice) {
+    private AssetDTO convertToDTO(Asset asset, BigDecimal currentPrice) {
         AssetDTO dto = new AssetDTO();
         dto.setId(asset.getId());
         dto.setUserId(asset.getUserId());
         dto.setUserId(asset.getUserId());
         dto.setQuantity(asset.getQuantity());
         // Set current price from Redis cache
-        dto.setCurrentPrice(currentPrice != null ? currentPrice : 0.0);
+        dto.setCurrentPrice(currentPrice != null ? currentPrice : BigDecimal.ZERO);
 
         return dto;
     }

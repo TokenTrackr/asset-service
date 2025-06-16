@@ -10,6 +10,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.math.BigDecimal;
+
 @Configuration
 public class RedisConfig {
 
@@ -36,19 +38,11 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Double> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Double> template = new RedisTemplate<>();
+    public RedisTemplate<String, BigDecimal> bigDecimalRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, BigDecimal> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-
-        // Use String serializer for keys
         template.setKeySerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-
-        // Use JSON serializer for values
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-        template.afterPropertiesSet();
         return template;
     }
 }

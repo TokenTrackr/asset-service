@@ -6,23 +6,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PriceCacheServiceImpl implements PriceCacheService {
 
-    private final RedisTemplate<String, Double> redisTemplate;
+    private final RedisTemplate<String, BigDecimal> redisTemplate;
+
     private static final String PRICE_KEY_PREFIX = "crypto:price:";
-    private static final long PRICE_TTL_HOURS = 24; // Cache prices for 24 hours
+    private static final long PRICE_TTL_HOURS = 24;
 
     @Override
-    public void cachePrice(String symbol, Double price) {
+    public void cachePrice(String symbol, BigDecimal price) {
         try {
             String key = PRICE_KEY_PREFIX + symbol.toUpperCase();
             redisTemplate.opsForValue().set(key, price, PRICE_TTL_HOURS, TimeUnit.HOURS);
@@ -33,10 +36,10 @@ public class PriceCacheServiceImpl implements PriceCacheService {
     }
 
     @Override
-    public Double getPrice(String cryptoId) {
+    public BigDecimal getPrice(String cryptoId) {
         try {
             String key = PRICE_KEY_PREFIX + cryptoId.toUpperCase();
-            Double price = redisTemplate.opsForValue().get(key);
+            BigDecimal price = redisTemplate.opsForValue().get(key);
             log.debug("Retrieved price for {}: {}", cryptoId, price);
             return price;
         } catch (Exception e) {
@@ -46,27 +49,22 @@ public class PriceCacheServiceImpl implements PriceCacheService {
     }
 
     @Override
-    public Map<String, Double> getPrices(Set<String> symbols) {
-        Map<String, Double> prices = new HashMap<>();
+    public Map<String, BigDecimal> getPrices(Set<String> symbols) {
+        Map<String, BigDecimal> prices = new HashMap<>();
         if (symbols.isEmpty()) {
             return prices;
         }
 
-        // 1. Build a List of keys (e.g. "price:BTC", "price:ETH", …)
         List<String> keys = symbols.stream()
                 .map(sym -> PRICE_KEY_PREFIX + sym.toUpperCase())
                 .toList();
 
         try {
-            // 2. Do one multiGet() instead of N individual get() calls
-            List<Double> values = redisTemplate.opsForValue().multiGet(keys);
+            List<BigDecimal> values = redisTemplate.opsForValue().multiGet(keys);
 
-            // 3. multiGet() returns a List in the same order as the keys.
-            //    Now zip keys ↔ values back into a Map<symbol, price>
             for (int i = 0; i < keys.size(); i++) {
-                Double price = values.get(i);
+                BigDecimal price = values.get(i);
                 if (price != null) {
-                    // keys.get(i) is like "price:BTC" → strip the prefix to get "BTC"
                     String symbol = keys.get(i).substring(PRICE_KEY_PREFIX.length());
                     prices.put(symbol, price);
                 }
@@ -122,7 +120,7 @@ public class PriceCacheServiceImpl implements PriceCacheService {
             if (keys != null) {
                 return keys.stream()
                         .map(key -> key.substring(PRICE_KEY_PREFIX.length()))
-                        .collect(java.util.stream.Collectors.toSet());
+                        .collect(Collectors.toSet());
             }
         } catch (Exception e) {
             log.error("Error getting all cached symbols", e);
@@ -130,3 +128,4 @@ public class PriceCacheServiceImpl implements PriceCacheService {
         return Set.of();
     }
 }
+

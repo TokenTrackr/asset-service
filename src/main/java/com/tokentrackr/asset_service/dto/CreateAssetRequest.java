@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class CreateAssetRequest {
     @NotBlank(message = "User ID cannot be blank")
@@ -13,5 +15,5 @@ public class CreateAssetRequest {
     private String cryptoId;
     @NotNull(message = "Quantity cannot be null")
     @Positive(message = "Quantity must be positive")
-    private double quantity;
+    private BigDecimal quantity;
 }

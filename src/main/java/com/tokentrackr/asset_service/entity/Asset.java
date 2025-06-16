@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "assets")
 @Data
@@ -24,13 +26,14 @@ public class Asset {
     private String userId;
 
     @Column(nullable = false)
-    private double quantity;
+    private BigDecimal quantity = BigDecimal.ZERO; // default to 0
 
-    // Current price is transient - not stored in DB
     @Transient
     private Double currentPrice = 0.0;
 
-    public Double getCurrentValue() {
-        return quantity * (currentPrice != null ? currentPrice : 0.0);
+    public BigDecimal getCurrentValue() {
+        // Convert currentPrice to BigDecimal safely
+        BigDecimal price = currentPrice != null ? BigDecimal.valueOf(currentPrice) : BigDecimal.ZERO;
+        return quantity.multiply(price);
     }
 }
