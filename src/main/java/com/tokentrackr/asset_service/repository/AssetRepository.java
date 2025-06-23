@@ -5,10 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface AssetRepository extends JpaRepository<Asset, Long> {
+public interface AssetRepository extends JpaRepository<Asset, UUID> {
     List<Asset> findByUserId(String userId);
-    Optional<Asset> findByIdAndUserId(Long assetId, String userId);
+    Optional<Asset> findByIdAndUserId(UUID assetId, String userId);
 
     void deleteByUserId(String userId);
 

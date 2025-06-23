@@ -9,6 +9,7 @@ import com.tokentrackr.asset_service.exception.AssetNotFoundException;
 import com.tokentrackr.asset_service.exception.InsufficientAssetException;
 import com.tokentrackr.asset_service.repository.AssetRepository;
 import com.tokentrackr.asset_service.service.interfaces.AssetSagaService;
+import com.tokentrackr.asset_service.service.messaging.EventPublisher;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.Optional;
 @Transactional
 public class AssetSagaServiceImpl implements AssetSagaService {
     private final AssetRepository assetRepository;
+    private final EventPublisher eventPublisher;
 
     @Override
     public void processAssetUpdate(AssetUpdateEvent event) {

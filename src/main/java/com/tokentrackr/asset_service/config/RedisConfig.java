@@ -21,21 +21,16 @@ public class RedisConfig {
     @Value("${redis.port:6379}")
     private int redisPort;
 
-    @Value("${redis.password}")
-    private String redisPassword;
-
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(redisHost);
         config.setPort(redisPort);
-
-        if (redisPassword != null && !redisPassword.isEmpty()) {
-            config.setPassword(redisPassword);
-        }
+        // no password set here
 
         return new LettuceConnectionFactory(config);
     }
+
 
     @Bean
     public RedisTemplate<String, BigDecimal> bigDecimalRedisTemplate(RedisConnectionFactory connectionFactory) {

@@ -15,32 +15,90 @@ import org.springframework.context.annotation.Configuration;
 @EnableRabbit
 public class RabbitMQConfig {
 
-    @Value("${price.queue.name}")
-    private String queueName;
+//    // Existing crypto/price queue setup
+//    @Value("${price.queue.name}")
+//    private String queueName;
+//
+//    @Value("${price.exchange.name}")
+//    private String exchangeName;
+//
+//    @Value("${price.routing.key}")
+//    private String routingKey;
+//
+//    @Bean
+//    public Queue cryptoQueue() {
+//        return new Queue(queueName, true);
+//    }
+//
+//    @Bean
+//    public DirectExchange cryptoExchange() {
+//        return new DirectExchange(exchangeName, true, false);
+//    }
+//
+//    @Bean
+//    public Binding cryptoBinding(Queue cryptoQueue, DirectExchange cryptoExchange) {
+//        return BindingBuilder.bind(cryptoQueue).to(cryptoExchange).with(routingKey);
+//    }
 
-    @Value("${price.exchange.name}")
-    private String exchangeName;
+    // --- NEW: Saga-related queues and exchange setup ---
 
-    @Value("${price.routing.key}")
-    private String routingKey;
+    public static final String SAGA_EXCHANGE = "saga.direct.exchange";
+
+    public static final String ASSET_UPDATE_QUEUE = "asset.update.queue";
+    public static final String ASSET_UPDATED_QUEUE = "asset.updated.queue";
+    public static final String ASSET_UPDATE_FAILED_QUEUE = "asset.update.failed.queue";
+
+    public static final String ASSET_UPDATE_ROUTING_KEY = "asset.update";
+    public static final String ASSET_UPDATED_ROUTING_KEY = "asset.updated";
+    public static final String ASSET_UPDATE_FAILED_ROUTING_KEY = "asset.update.failed";
 
     @Bean
-    public Queue cryptoQueue() { return new Queue(queueName, true); }
-
-    @Bean
-    public DirectExchange cryptoExchange() {
-        return new DirectExchange(exchangeName, true, false);
+    public DirectExchange sagaExchange() {
+        return new DirectExchange(SAGA_EXCHANGE, true, false);
     }
 
     @Bean
-    public Binding binding(Queue cryptoQueue, DirectExchange cryptoExchange) {
-        return BindingBuilder.bind(cryptoQueue).to(cryptoExchange).with(routingKey);
+    public Queue assetUpdateQueue() {
+        return QueueBuilder.durable(ASSET_UPDATE_QUEUE).build();
     }
 
+    @Bean
+    public Queue assetUpdatedQueue() {
+        return QueueBuilder.durable(ASSET_UPDATED_QUEUE).build();
+    }
+
+    @Bean
+    public Queue assetUpdateFailedQueue() {
+        return QueueBuilder.durable(ASSET_UPDATE_FAILED_QUEUE).build();
+    }
+
+    @Bean
+    public Binding assetUpdateBinding() {
+        return BindingBuilder.bind(assetUpdateQueue())
+                .to(sagaExchange())
+                .with(ASSET_UPDATE_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding assetUpdatedBinding() {
+        return BindingBuilder.bind(assetUpdatedQueue())
+                .to(sagaExchange())
+                .with(ASSET_UPDATED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding assetUpdateFailedBinding() {
+        return BindingBuilder.bind(assetUpdateFailedQueue())
+                .to(sagaExchange())
+                .with(ASSET_UPDATE_FAILED_ROUTING_KEY);
+    }
+
+    // Common JSON converter and RabbitTemplate setup
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
+
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
                                          MessageConverter messageConverter) {
@@ -62,3 +120,4 @@ public class RabbitMQConfig {
         return factory;
     }
 }
+
